@@ -1,0 +1,26 @@
+{
+  "nodes": {
+    "math": {
+      "locked": {
+        "lastModified": 1710111781,
+        "narHash": "sha256-O1zUc/tGwG/EpWQdwOz7MuxOUcP7ee6lAGvoqKEEZNo=",
+        "owner": "henkkuli",
+        "repo": "math.nix",
+        "rev": "ec2ee59cd212b5c3a3dd4a90558015c7c6cb7a41",
+        "type": "github"
+      },
+      "original": {
+        "owner": "henkkuli",
+        "repo": "math.nix",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "math": "math"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
