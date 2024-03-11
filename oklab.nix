@@ -94,10 +94,12 @@ let
       # oklch = oklch L a b;
 
       # Color conversion functions
-      # Lighten or derken the color by additive factor. This is _not_ the smae as exposure change.
-      lighten = math.ffun (amount: oklab (L + amount) a b);
-      darken = math.ffun (amount: oklab (L - amount) a b);
-      # Scale the color. This corresponds to change in exposure.
+      # Lighten or derken the color by additive or multiplicative factor.
+      lighten = math.ffun (amount: oklab (L - (L - 1) * amount) a b);
+      lighten_fixed = math.ffun (amount: oklab (L + amount) a b);
+      darken = math.ffun (amount: oklab (L * (1 - amount)) a b);
+      darken_fixed = math.ffun (amount: oklab (L - amount) a b);
+      # Scale the color.
       scale = math.ffun (amount: oklab (L * amount) (a * amount) (b * amount));
       # Find the complementary color.
       complementary = math.ffun (oklab L (-a) (-b));
