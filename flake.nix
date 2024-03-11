@@ -4,12 +4,5 @@
   inputs = {
     math.url = "github:henkkuli/math.nix";
   };
-  outputs =
-    { self, ... }@inputs:
-    let
-      oklab = import ./oklab.nix inputs;
-    in
-    {
-      inherit oklab;
-    };
+  outputs = { self, ... }@inputs: import ./oklab.nix inputs;
 }

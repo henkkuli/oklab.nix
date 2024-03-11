@@ -84,68 +84,86 @@ let
 
   # oklabToRgb = 
 
-  oklab = L: a: b: rec {
-    inherit L a b;
-    # oklch = oklch L a b;
+  oklab =
+    L: a: b:
+    let
+      lch = oklch L (math.sqrt (a * a + b * b)) (math.atan2 b a);
+    in
+    {
+      inherit L a b;
+      # oklch = oklch L a b;
 
-    # Color conversion functions
-    lihgten = amount: oklab (L + amount) a b;
-    darken = amount: oklab (L - amount) a b;
-    complementary = oklab L (-a) (-b);
-    saturate = amount: (oklch.saturate amount).oklab;
-    rotate = amount: (oklch.rotate amount).oklab;
+      # Color conversion functions
+      # Lighten or derken the color by additive factor. This is _not_ the smae as exposure change.
+      lighten = math.ffun (amount: oklab (L + amount) a b);
+      darken = math.ffun (amount: oklab (L - amount) a b);
+      # Scale the color. This corresponds to change in exposure.
+      scale = math.ffun (amount: oklab (L * amount) (a * amount) (b * amount));
+      # Find the complementary color.
+      complementary = math.ffun (oklab L (-a) (-b));
+      # Add more staration to the color.
+      saturate = math.ffun (amount: (lch.saturate amount).oklab);
+      # Rotate the hue of the color.
+      rotate = math.ffun (amount: (lch.rotate amount).oklab);
 
-    # Color space conversions
-    rgb =
-      let
-        l_ = L + 0.3963377774 * a + 0.2158037573 * b;
-        m_ = L - 0.1055613458 * a - 6.38541728e-2 * b;
-        s_ = L - 8.94841775e-2 * a - 1.291485548 * b;
+      # Color space conversions
+      rgb =
+        let
+          l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+          m_ = L - 0.1055613458 * a - 6.38541728e-2 * b;
+          s_ = L - 8.94841775e-2 * a - 1.291485548 * b;
 
-        l = l_ * l_ * l_;
-        m = m_ * m_ * m_;
-        s = s_ * s_ * s_;
+          l = l_ * l_ * l_;
+          m = m_ * m_ * m_;
+          s = s_ * s_ * s_;
 
-        rLin = 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
-        gLin = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
-        bLin = -4.1960863e-3 * l - 0.7034186147 * m + 1.707614701 * s;
+          rLin = 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+          gLin = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+          bLin = -4.1960863e-3 * l - 0.7034186147 * m + 1.707614701 * s;
 
-        tou8 =
-          x:
-          let
-            r = builtins.floor (255 * x);
-          in
-          if r < 0 then
-            0
-          else if r > 255 then
-            255
-          else
-            r;
-      in
-      rec {
-        r = srgbTransferInv rLin;
-        g = srgbTransferInv gLin;
-        b = srgbTransferInv bLin;
-        ru8 = tou8 r;
-        gu8 = tou8 g;
-        bu8 = tou8 b;
-        hex = "${toHex 2 ru8}${toHex 2 gu8}${toHex 2 bu8}";
-        hexh = "#${hex}";
-        HEX = "${toHEX 2 ru8}${toHEX 2 gu8}${toHEX 2 bu8}";
-        HEXh = "#${HEX}";
-      };
+          tou8 =
+            x:
+            let
+              r = builtins.floor (255 * x);
+            in
+            if r < 0 then
+              0
+            else if r > 255 then
+              255
+            else
+              r;
+        in
+        rec {
+          r = srgbTransferInv rLin;
+          g = srgbTransferInv gLin;
+          b = srgbTransferInv bLin;
+          ru8 = tou8 r;
+          gu8 = tou8 g;
+          bu8 = tou8 b;
+          hex = "${toHex 2 ru8}${toHex 2 gu8}${toHex 2 bu8}";
+          hexh = "#${hex}";
+          HEX = "${toHEX 2 ru8}${toHEX 2 gu8}${toHEX 2 bu8}";
+          HEXh = "#${HEX}";
+        };
 
-    oklch = oklch L (math.sqrt (a * a + b * b)) (math.atan2 b a);
-  };
+      oklch = lch;
+    };
 
-  oklch = L: C: h: rec {
-    inherit L C h;
+  oklch =
+    L: C: h:
+    let
+      lab = oklab L (C * math.cos h) (C * math.sin h);
+    in
+    {
+      inherit L C h;
 
-    rotate = amount: oklch L C (h + amount);
-    saturate = amount: oklch L (C + amount) h;
+      # Rotate the hue of the color.
+      rotate = math.ffun (amount: oklch L C (h + amount));
+      # Add more staration to the color.
+      saturate = math.ffun (amount: oklch L (C + amount) h);
 
-    oklab = oklab L (C * math.cos h) (C * math.sin h);
-  };
+      oklab = lab;
+    };
 in
 {
   inherit oklab srgb oklch;
