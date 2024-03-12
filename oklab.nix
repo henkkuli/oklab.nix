@@ -1,5 +1,7 @@
-{ math, ... }:
+{ math, ... }@inputs:
 let
+  util = import ./util.nix inputs;
+
   # Source: https://bottosson.github.io/posts/colorwrong/#what-can-we-do%3F
   srgbTransfer = math.ffun (
     x: if x >= 3.1308e-3 then 1.055 * (math.pow x (1.0 / 2.4)) - 5.5e-2 else 12.92 * x
@@ -26,61 +28,31 @@ let
       (1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s)
       (2.59040371e-2 * l + 0.7827717662 * m - 0.808675766 * s);
 
-  toHex =
-    len: v:
-    if len <= 0 then
-      ""
-    else
+  fromHex =
+    x:
+    if builtins.match "#[0-9abcdefABCEDF]+" x != null then
+      fromHex (builtins.substring 1 (-1) x)
+    else if builtins.stringLength x == 3 then
       let
+        v = util.fromHex x;
+        r = v / 256;
+        g = builtins.bitAnd 15 (v / 16);
         b = builtins.bitAnd 15 v;
-        letters = [
-          "0"
-          "1"
-          "2"
-          "3"
-          "4"
-          "5"
-          "6"
-          "7"
-          "8"
-          "9"
-          "a"
-          "b"
-          "c"
-          "d"
-          "e"
-          "f"
-        ];
+        f = 17.0 / 255.0;
       in
-      toHex (len - 1) (v / 16) + (builtins.elemAt letters b);
-
-  toHEX =
-    len: v:
-    if len <= 0 then
-      ""
-    else
+      srgb (r * f) (g * f) (b * f)
+    else if builtins.stringLength x == 6 then
       let
-        b = builtins.bitAnd 15 v;
-        letters = [
-          "0"
-          "1"
-          "2"
-          "3"
-          "4"
-          "5"
-          "6"
-          "7"
-          "8"
-          "9"
-          "A"
-          "B"
-          "C"
-          "D"
-          "E"
-          "F"
-        ];
+        v = util.fromHex x;
+        r = v / 65536;
+        g = builtins.bitAnd 255 (v / 256);
+        b = builtins.bitAnd 255 v;
+        f = 1.0 / 255.0;
       in
-      toHEX (len - 1) (v / 16) + builtins.elemAt letters b;
+      srgb (r * f) (g * f) (b * f)
+    else
+      assert false;
+      0;
 
   # oklabToRgb = 
 
@@ -122,29 +94,17 @@ let
           rLin = 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
           gLin = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
           bLin = -4.1960863e-3 * l - 0.7034186147 * m + 1.707614701 * s;
-
-          tou8 =
-            x:
-            let
-              r = builtins.floor (255 * x);
-            in
-            if r < 0 then
-              0
-            else if r > 255 then
-              255
-            else
-              r;
         in
         rec {
           r = srgbTransferInv rLin;
           g = srgbTransferInv gLin;
           b = srgbTransferInv bLin;
-          ru8 = tou8 r;
-          gu8 = tou8 g;
-          bu8 = tou8 b;
-          hex = "${toHex 2 ru8}${toHex 2 gu8}${toHex 2 bu8}";
+          ru8 = util.tou8 r;
+          gu8 = util.tou8 g;
+          bu8 = util.tou8 b;
+          hex = "${util.toHex 2 ru8}${util.toHex 2 gu8}${util.toHex 2 bu8}";
           hexh = "#${hex}";
-          HEX = "${toHEX 2 ru8}${toHEX 2 gu8}${toHEX 2 bu8}";
+          HEX = "${util.toHEX 2 ru8}${util.toHEX 2 gu8}${util.toHEX 2 bu8}";
           HEXh = "#${HEX}";
         };
 
@@ -168,5 +128,11 @@ let
     };
 in
 {
-  inherit oklab srgb oklch;
+  inherit
+    util
+    oklab
+    srgb
+    oklch
+    fromHex
+    ;
 }
