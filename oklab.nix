@@ -16,9 +16,9 @@ let
     r: g: b:
     let
       # Linearize srgb
-      rLin = srgbTransfer r;
-      gLin = srgbTransfer g;
-      bLin = srgbTransfer b;
+      rLin = srgbTransferInv r;
+      gLin = srgbTransferInv g;
+      bLin = srgbTransferInv b;
       # Convert to oklab
       l = math.cbrt (0.4122214708 * rLin + 0.5363325363 * gLin + 5.14459929e-2 * bLin);
       m = math.cbrt (0.2119034982 * rLin + 0.6806995451 * gLin + 0.1073969566 * bLin);
@@ -96,9 +96,9 @@ let
           bLin = -4.1960863e-3 * l - 0.7034186147 * m + 1.707614701 * s;
         in
         rec {
-          r = srgbTransferInv rLin;
-          g = srgbTransferInv gLin;
-          b = srgbTransferInv bLin;
+          r = srgbTransfer rLin;
+          g = srgbTransfer gLin;
+          b = srgbTransfer bLin;
           ru8 = util.tou8 r;
           gu8 = util.tou8 g;
           bu8 = util.tou8 b;
