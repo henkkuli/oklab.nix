@@ -63,7 +63,7 @@ let
     in
     {
       inherit L a b;
-      # oklch = oklch L a b;
+      _type = "oklab";
 
       # Color conversion functions
       # Lighten or derken the color by additive or multiplicative factor.
